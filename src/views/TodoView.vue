@@ -42,6 +42,8 @@ const newTodo = ref({
 })
 
 const addTodo = async (todoItem) => {
+  // console.log(todoItem);
+  
   if (todoItem != '') {
     try {
       const res = await axios.post(
@@ -53,7 +55,7 @@ const addTodo = async (todoItem) => {
           }
         }
       )
-      newTodo.value = {}
+      newTodo.value.content =''
       getTodos()
     } catch (error) {
       console.log(error)
@@ -100,17 +102,26 @@ const cancelEdit = () => {
   tempTodo.value = {}
 }
 
-const editTodo = async (id) => {
-  try {
-    const res = await axios.put(`${api}/todos/${id}`, tempTodo.value, {
-      headers: {
-        Authorization: auth.token
-      }
+const editTodo = async (todo) => {
+  if(tempTodo.value.content != todo.content){
+    try {
+      const res = await axios.put(`${api}/todos/${todo.id}`, tempTodo.value, {
+        headers: {
+          Authorization: auth.token
+        }
+      })
+      tempTodo.value = {}
+      getTodos()
+    } catch (error) {
+      console.log(error)
+    }
+  }else{
+    Swal.fire({
+      title: '待辦內容未更新',
+      icon: 'error',
+      confirmButtonText: 'OK',
+      timer: 2000
     })
-    tempTodo.value = {}
-    getTodos()
-  } catch (error) {
-    console.log(error)
   }
 }
 
@@ -282,7 +293,7 @@ const deleteAll = () => {
                   <span>{{ todo.content }}</span>
                 </label>
                 <div class="todoList_btn" v-if="todo.id === tempTodo.id">
-                  <a @click="editTodo(todo.id)">
+                  <a @click="editTodo(todo)">
                     <i class="fa-regular fa-circle-check fa-2xl"></i>
                   </a>
                   <a @click="cancelEdit">
