@@ -25,8 +25,6 @@ const errorMsg = ref({
 const emailRule = /^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$/
 const passwordRule = /^[A-Za-z\d@$!%*?&]{6,}$/
 
-const isPass = ref(false)
-
 const errorHandle = () => {
   if (!signUpData.value.email) {
     errorMsg.value.email = 'email 欄位未提供'
@@ -51,14 +49,14 @@ const errorHandle = () => {
   }
 
   if (Object.keys(errorMsg.value).length == 0) {
-    isPass.value = true
+    return true
   }
 }
 
 const signUp = async () => {
   errorMsg.value = {}
-  errorHandle()
-  if (isPass.value) {
+
+  if (errorHandle()) {
     try {
       const res = await axios.post(`${api}/users/sign_up`, signUpData.value)
       signUpData.value = {}
