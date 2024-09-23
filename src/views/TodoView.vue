@@ -10,6 +10,8 @@ const auth = useAuth()
 
 const api = 'https://todolist-api.hexschool.io'
 
+const isLoading = ref(false)
+
 const pageState = ref('all')
 
 const todoList = ref([])
@@ -41,22 +43,28 @@ const newTodo = ref({
   content: ''
 })
 
-const addTodo = async (todoItem) => {
-  // console.log(todoItem);
-  
-  if (todoItem != '') {
+const addTodo = async (todoItem) => {  
+  if (todoItem.trim() != '') {
+    isLoading.value = true
     try {
       const res = await axios.post(
         `${api}/todos/`,
-        { content: todoItem },
+        { content: todoItem.trim() },
         {
           headers: {
             Authorization: auth.token
           }
         }
       )
+      todoList.value.push({
+        id: res.data.newTodo.id,
+        content: res.data.newTodo.content,
+        status: false,
+      })
       newTodo.value.content =''
-      getTodos()
+      setTimeout(()=>{
+        isLoading.value = false
+      }, 500)
     } catch (error) {
       console.log(error)
     }
@@ -110,8 +118,9 @@ const editTodo = async (todo) => {
           Authorization: auth.token
         }
       })
+      const index = todoList.value.findIndex((item)=> item.id == todo.id)
+      todoList.value[index].content = tempTodo.value.content;      
       tempTodo.value = {}
-      getTodos()
     } catch (error) {
       console.log(error)
     }
@@ -136,19 +145,22 @@ const deleteTodo = (id) => {
     cancelButtonText: '否'
   }).then(async (result) => {
     if (result.isConfirmed) {
+      isLoading.value = true
       try {
         const res = await axios.delete(`${api}/todos/${id}`, {
           headers: {
             Authorization: auth.token
           }
-        })
-        getTodos().then(() => {
+        }).then(() => {
           Swal.fire({
             title: 'Deleted!',
             text: '成功刪除',
             icon: 'success'
           })
         })
+      const index = todoList.value.findIndex((item)=> item.id == id)
+      todoList.value.splice(index, index == 0 ? 1 : index)
+      isLoading.value = false
       } catch (error) {
         console.log(error)
       }
@@ -166,8 +178,9 @@ const updateStatus = async (id) => {
           Authorization: auth.token
         }
       }
-    )
-    getTodos()
+    )    
+    const index = todoList.value.findIndex((item)=> item.id == id)
+    todoList.value[index].status = todoList.value[index].status ? false : true
   } catch (error) {
     console.log(error)
   }
@@ -192,10 +205,14 @@ onMounted(async () => {
 })
 
 const oneButton = () => {
+  isLoading.value = true
   const inputData = ['新增待辦事項', '切換待辦事項狀態', '修改待辦事項', '移除待辦事項']
   for (let i = 0; i < inputData.length; i++) {
     addTodo(inputData[i])
   }
+  setTimeout(()=>{
+    isLoading.value = false
+  }, 500)
 }
 
 const deleteAll = () => {
@@ -208,6 +225,7 @@ const deleteAll = () => {
     confirmButtonText: '是',
     cancelButtonText: '否'
   }).then(async (result) => {
+    isLoading.value = true
     if (result.isConfirmed) {
       for (let i = 0; i < todoList.value.length; i++) {
         await axios.delete(`${api}/todos/${todoList.value[i].id}`, {
@@ -222,12 +240,14 @@ const deleteAll = () => {
           text: '已刪除所有待辦',
           icon: 'success'
         })
+        isLoading.value = false
       })
     }
   })
 }
 </script>
 <template>
+  <Loading :active="isLoading"></Loading>
   <div id="todoListPage" class="bg-half">
     <input type="button" class="oneButton" @click.prevent="oneButton" value="一鍵加入" />
     <input type="button" class="deleteAll" @click.prevent="deleteAll" value="全部刪除" />
