@@ -178,11 +178,11 @@ const updateStatus = async (id) => {
           Authorization: auth.token
         }
       }
-    )    
-    const index = todoList.value.findIndex((item)=> item.id == id)
-    todoList.value[index].status = todoList.value[index].status ? false : true
+    )        
   } catch (error) {
     console.log(error)
+    const index = todoList.value.findIndex((item)=> item.id == id)
+    todoList.value[index].status = todoList.value[index].status ? false : true
   }
 }
 
